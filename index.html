@@ -25,14 +25,17 @@ class StartScene extends Phaser.Scene {
     this.add.text(200, 200, 'Kebutuhan KU', { fontSize: '32px', color: '#000' }).setOrigin(0.5);
     this.add.text(200, 240, 'Belajar Primer, Sekunder, Tersier', { fontSize: '16px', color: '#f60' }).setOrigin(0.5);
 
-    if (!this.game.bgm) {
-      this.game.bgm = this.sound.add('bgm', { loop: true, volume: 0.5 });
-      this.game.bgm.play();
-    }
-
-    this.add.text(200, 300, 'Mulai', { fontSize: '24px', backgroundColor: '#333', color: '#fff', padding: 10 })
-      .setOrigin(0.5).setInteractive()
-      .on('pointerdown', () => this.scene.start('GameScene'));
+    const startBtn = this.add.text(200, 300, 'Mulai', {
+      fontSize: '24px', backgroundColor: '#333', color: '#fff', padding: 10
+    }).setOrigin(0.5).setInteractive()
+      .on('pointerdown', () => {
+        // ✅ Play BGM satu kali global, ga restart kalau sudah play
+        if (!this.game.bgm) {
+          this.game.bgm = this.sound.add('bgm', { loop: true, volume: 0.5 });
+          this.game.bgm.play();
+        }
+        this.scene.start('GameScene');
+      });
   }
 }
 
@@ -41,6 +44,7 @@ class GameScene extends Phaser.Scene {
   preload() {
     this.load.image('bg', 'asset/image/bg.jpg');
     this.load.image('player', 'asset/image/anakSD.png');
+
     this.load.audio('sfxGood', 'asset/music/benar.mp3');
     this.load.audio('sfxBad', 'asset/music/salah.mp3');
 
@@ -65,7 +69,7 @@ class GameScene extends Phaser.Scene {
     this.scoreText = this.add.text(10, 10, 'Score: 0', { fontSize: '16px', color: '#000' });
     this.failsText = this.add.text(10, 30, 'Gagal: 0/3', { fontSize: '16px', color: '#f00' });
 
-    this.bgm = this.game.bgm;  // BGM global
+    this.bgm = this.game.bgm;  // ✅ BGM global ga restart
     this.sfxGood = this.sound.add('sfxGood');
     this.sfxBad = this.sound.add('sfxBad');
 
@@ -81,7 +85,7 @@ class GameScene extends Phaser.Scene {
     this.showLevelText();
     this.startSpawnLoops();
 
-    // ✅ Touch drag/swipe control
+    // ✅ Swipe control untuk mobile
     this.input.on('pointermove', pointer => {
       if (pointer.isDown) {
         this.player.x = Phaser.Math.Clamp(pointer.x, 40, 360);
@@ -205,7 +209,6 @@ const config = {
   physics: { default: 'arcade' },
   scene: [StartScene, GameScene, GameOverScene]
 };
-
 const game = new Phaser.Game(config);
 </script>
 </body>
