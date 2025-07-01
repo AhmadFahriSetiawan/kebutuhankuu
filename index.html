@@ -35,15 +35,13 @@ class StartScene extends Phaser.Scene {
       fontSize: '24px', backgroundColor: '#333', color: '#fff', padding: 10
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
-    // ✅ Make sure pointerdown works on mobile
-    this.input.on('gameobjectdown', (pointer, gameObject) => {
-      if (gameObject === startBtn) {
-        if (!this.game.bgm) {
-          this.game.bgm = this.sound.add('bgm', { loop: true, volume: 0.5 });
-          this.game.bgm.play();
-        }
-        this.scene.start('GameScene');
+    // ✅ Lebih stabil: langsung pointerdown di button
+    startBtn.on('pointerdown', () => {
+      if (!this.game.bgm) {
+        this.game.bgm = this.sound.add('bgm', { loop: true, volume: 0.5 });
+        this.game.bgm.play();
       }
+      this.scene.start('GameScene');
     });
   }
 }
@@ -85,7 +83,7 @@ class GameScene extends Phaser.Scene {
       fontSize: '16px', color: '#f00'
     });
 
-    this.bgm = this.game.bgm; // ✅ global BGM
+    this.bgm = this.game.bgm; // ✅ BGM global
     this.sfxGood = this.sound.add('sfxGood');
     this.sfxBad = this.sound.add('sfxBad');
 
@@ -101,7 +99,6 @@ class GameScene extends Phaser.Scene {
     this.showLevelText();
     this.startSpawnLoops();
 
-    // ✅ SWIPE CONTROL (drag)
     this.input.on('pointermove', pointer => {
       if (pointer.isDown) {
         this.player.x = Phaser.Math.Clamp(pointer.x, 40, 360);
@@ -214,10 +211,10 @@ class GameOverScene extends Phaser.Scene {
       { fontSize: '24px', backgroundColor: '#333', color: '#fff', padding: 10 })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
-    this.input.on('gameobjectdown', (pointer, gameObject) => {
-      if (gameObject === btn) {
-        this.scene.start('GameScene');
-      }
+
+    // ✅ pointerdown langsung
+    btn.on('pointerdown', () => {
+      this.scene.start('GameScene');
     });
   }
 }
