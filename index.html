@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Kebutuhan KU - Multi Level Item</title>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.js"></script>
+  <style>
+    body { margin: 0; background: #000; }
+    canvas { display: block; margin: 0 auto; }
+  </style>
+</head>
+<body>
+<script>
+class StartScene extends Phaser.Scene {
+  constructor() { super({ key: 'StartScene' }); }
+  preload() {
+    this.load.image('bg', 'asset/image/bg.jpg');
+
+    // 👉 Tambah load music di sini
+    this.load.audio('bgm', 'asset/music/corporate-ukulele-optimistic-light-262592.mp3');
+    this.load.audio('sfxGood', 'asset/music/benar.mp3');
+    this.load.audio('sfxBad', 'asset/music/salah.mp3');
+  }
+  create() {
+    this.add.image(200, 300, 'bg').setDisplaySize(400, 600);
+    this.add.text(200, 200, 'Kebutuhan KU', { fontSize: '32px', color: '#000' }).setOrigin(0.5);
+    this.add.text(200, 240, 'Belajar Primer, Sekunder, Tersier', { fontSize: '16px', color: '#f60' }).setOrigin(0.5);
+
+    const startBtn = this.add.text(200, 300, 'Mulai', { fontSize: '24px', backgroundColor: '#333', color: '#fff', padding: 10 })
+      .setOrigin(0.5)
+      .setInteractive()
+      .on('pointerdown', () => this.scene.start('GameScene'));
+  }
+}
+
+class GameScene extends Phaser.Scene {
+  constructor() { super({ key: 'GameScene' }); }
+  preload() {
+    this.load.image('bg', 'asset/image/bg.jpg');
+    this.load.image('player', 'asset/image/anakSD.png');
+
+    // Load BGM & SFX lagi di GameScene juga (biar aman)
+    this.load.audio('bgm', 'asset/audio/bgm.mp3');
+    this.load.audio('sfxGood', 'asset/audio/good.wav');
+    this.load.audio('sfxBad', 'asset/audio/bad.wav');
+
+    // === GAMBAR ===
+    this.load.image('good1a', 'asset/image/makanan.png');
+    this.load.image('good1b', 'asset/image/baju.png');
+    this.load.image('good1c', 'asset/image/rumah.png');
+    this.load.image('bad1a', 'asset/image/emas.png');
+    this.load.image('bad1b', 'asset/image/berlian.png');
+    this.load.image('bad1c', 'asset/image/uang.png');
+
+    this.load.image('good2a', 'asset/image/motor.png');
+    this.load.image('good2b', 'asset/image/tv.png');
+    this.load.image('good2c', 'asset/image/laptop.png');
+    this.load.image('bad2a', 'asset/image/makanan.png');
+    this.load.image('bad2b', 'asset/image/baju.png');
+    this.load.image('bad2c', 'asset/image/rumah.png');
+
+    this.load.image('good3a', 'asset/image/uang.png');
+    this.load.image('good3b', 'asset/image/berlian.png');
+    this.load.image('good3c', 'asset/image/emas.png');
+    this.load.image('bad3a', 'asset/image/motor.png');
+    this.load.image('bad3b', 'asset/image/tv.png');
+    this.load.image('bad3c', 'asset/image/laptop.png');
+  }
+
+  create() {
+    this.add.image(200, 300, 'bg').setDisplaySize(400, 600);
+
+    this.player = this.physics.add.sprite(200, 550, 'player')
+      .setDisplaySize(75, 75)
+      .setCollideWorldBounds(true);
+
+    this.score = 0;
+    this.fails = 0;
+    this.level = 1;
+    this.isPaused = false;
+
+    this.levelText = this.add.text(200, 50, '', { fontSize: '20px', color: '#000' }).setOrigin(0.5);
+    this.scoreText = this.add.text(10, 10, 'Score: 0', { fontSize: '16px', color: '#000' });
+    this.failsText = this.add.text(10, 30, 'Gagal: 0/3', { fontSize: '16px', color: '#f00' });
+
+    this.cursors = this.input.keyboard.createCursorKeys();
+
+    // ✅ Music & SFX
+    this.bgm = this.sound.add('bgm', { loop: true, volume: 0.5 });  // 👉 GANTI BGM di sini
+    this.bgm.play();
+
+    this.sfxGood = this.sound.add('sfxGood');  // 👉 GANTI sfx good di sini
+    this.sfxBad = this.sound.add('sfxBad');    // 👉 GANTI sfx bad di sini
+
+    this.levels = {
+      1: { name: 'Primer', good: ['good1a', 'good1b', 'good1c'], bad: ['bad1a', 'bad1b', 'bad1c'] },
+      2: { name: 'Sekunder', good: ['good2a', 'good2b', 'good2c'], bad: ['bad2a', 'bad2b', 'bad2c'] },
+      3: { name: 'Tersier', good: ['good3a', 'good3b', 'good3c'], bad: ['bad3a', 'bad3b', 'bad3c'] }
+    };
+
+    this.goods = [];
+    this.bads = [];
+    this.slots = [50, 120, 190, 260, 330];
+    Phaser.Utils.Array.Shuffle(this.slots);
+
+    this.showLevelText();
+    this.startSpawnLoops();
+  }
+
+  startSpawnLoops() {
+    const cfg = this.levels[this.level];
+
+    this.goodEvent = this.time.addEvent({
+      delay: 2000,
+      callback: () => {
+        if (this.goods.length < 3) this.spawnOneItem('good', cfg.good);
+      },
+      loop: true
+    });
+
+    this.badEvent = this.time.addEvent({
+      delay: 3000,
+      callback: () => {
+        if (this.bads.length < 3) this.spawnOneItem('bad', cfg.bad);
+      },
+      loop: true
+    });
+  }
+
+  spawnOneItem(type, imageArray) {
+    if (this.slots.length === 0) {
+      this.slots = [50, 120, 190, 260, 330];
+      Phaser.Utils.Array.Shuffle(this.slots);
+    }
+    const xPos = this.slots.pop();
+    const key = Phaser.Utils.Array.GetRandom(imageArray);
+    const sprite = this.physics.add.sprite(xPos, -30, key).setDisplaySize(70, 70);
+
+    sprite.fallSpeed = 2;
+
+    if (type === 'good') {
+      this.goods.push(sprite);
+      this.physics.add.overlap(this.player, sprite, () => this.collectGood(sprite), null, this);
+    } else {
+      this.bads.push(sprite);
+      this.physics.add.overlap(this.player, sprite, () => this.hitBad(sprite), null, this);
+    }
+  }
+
+  update() {
+    if (this.isPaused) return;
+
+    if (this.cursors.left.isDown) this.player.setVelocityX(-300);
+    else if (this.cursors.right.isDown) this.player.setVelocityX(300);
+    else this.player.setVelocityX(0);
+
+    this.goods.forEach(good => {
+      good.y += good.fallSpeed;
+      if (good.y > 600) {
+        this.fails++;
+        this.failsText.setText('Gagal: ' + this.fails + '/3');
+        this.goods.splice(this.goods.indexOf(good), 1);
+        good.destroy();
+      }
+    });
+
+    this.bads.forEach(bad => {
+      bad.y += bad.fallSpeed;
+      if (bad.y > 600) {
+        this.bads.splice(this.bads.indexOf(bad), 1);
+        bad.destroy();
+      }
+    });
+
+    if (this.score >= this.level * 10 && this.level < 3) {
+      this.level++;
+      this.showLevelText();
+      this.startSpawnLoops();
+    }
+
+    if (this.score >= 30) {
+      this.scene.start('GameOverScene', { score: this.score, win: true });
+    }
+    if (this.fails >= 3) {
+      this.scene.start('GameOverScene', { score: this.score, win: false });
+    }
+  }
+
+  collectGood(good) {
+    this.sfxGood.play(); // 👉 Sound collect GOOD
+    this.score++;
+    this.scoreText.setText('Score: ' + this.score);
+    this.goods.splice(this.goods.indexOf(good), 1);
+    good.destroy();
+  }
+
+  hitBad(bad) {
+    this.sfxBad.play(); // 👉 Sound hit BAD
+    this.fails++;
+    this.failsText.setText('Gagal: ' + this.fails + '/3');
+    this.bads.splice(this.bads.indexOf(bad), 1);
+    bad.destroy();
+  }
+
+  showLevelText() {
+    this.isPaused = true;
+
+    if (this.goodEvent) this.goodEvent.remove();
+    if (this.badEvent) this.badEvent.remove();
+
+    const cfg = this.levels[this.level];
+    this.levelText.setText(`Level ${this.level}: ${cfg.name}`);
+    this.levelText.setVisible(true);
+
+    this.slots = [50, 120, 190, 260, 330];
+    Phaser.Utils.Array.Shuffle(this.slots);
+
+    this.time.delayedCall(2000, () => {
+      this.levelText.setVisible(false);
+      this.isPaused = false;
+    });
+  }
+}
+
+class GameOverScene extends Phaser.Scene {
+  constructor() { super({ key: 'GameOverScene' }); }
+  init(data) { this.score = data.score; this.win = data.win; }
+  create() {
+    this.add.text(200, 200, this.win ? 'Selamat, Menang!' : 'Game Over', { fontSize: '32px', color: '#f00' }).setOrigin(0.5);
+    this.add.text(200, 250, `Skor: ${this.score}`, { fontSize: '24px', color: '#000' }).setOrigin(0.5);
+
+    const restartBtn = this.add.text(200, 350, 'Main Lagi', { fontSize: '24px', backgroundColor: '#333', color: '#fff', padding: 10 })
+      .setOrigin(0.5)
+      .setInteractive()
+      .on('pointerdown', () => this.scene.start('GameScene'));
+  }
+}
+
+const config = {
+  type: Phaser.AUTO,
+  width: 400,
+  height: 600,
+  physics: { default: 'arcade' },
+  scene: [StartScene, GameScene, GameOverScene]
+};
+
+const game = new Phaser.Game(config);
+</script>
+</body>
+</html>
