@@ -16,7 +16,7 @@ class StartScene extends Phaser.Scene {
   constructor() { super({ key: 'StartScene' }); }
   preload() {
     this.load.image('bg', 'asset/image/bg.jpg');
-    this.load.audio('bgm', 'asset/music/bgm.mp3');
+    this.load.audio('bgm', 'asset/music/asset/music/corporate-ukulele-optimistic-light-262592.mp3');
     this.load.audio('sfxGood', 'asset/music/benar.mp3');
     this.load.audio('sfxBad', 'asset/music/salah.mp3');
   }
@@ -30,9 +30,9 @@ class StartScene extends Phaser.Scene {
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
     startBtn.on('pointerdown', () => {
-      if (!this.game.bgm) {
-        this.game.bgm = this.sound.add('bgm', { loop: true, volume: 0.5 });
-        this.game.bgm.play();
+      if (!this.game.corporate-ukulele-optimistic-light-262592) {
+        this.game.corporate-ukulele-optimistic-light-262592 = this.sound.add('asset/music/corporate-ukulele-optimistic-light-262592', { loop: true, volume: 0.5 });
+        this.game.corporate-ukulele-optimistic-light-262592.play();
       }
       this.scene.start('GameScene');
     });
