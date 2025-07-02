@@ -14,28 +14,21 @@
 <script>
 class StartScene extends Phaser.Scene {
   constructor() { super({ key: 'StartScene' }); }
-
   preload() {
     this.load.image('bg', 'asset/image/bg.jpg');
-    this.load.audio('bgm', 'asset/music/corporate-ukulele-optimistic-light-262592.mp3');
+    this.load.audio('bgm', 'asset/music/bgm.mp3');
     this.load.audio('sfxGood', 'asset/music/benar.mp3');
     this.load.audio('sfxBad', 'asset/music/salah.mp3');
   }
-
   create() {
     this.add.image(200, 300, 'bg').setDisplaySize(400, 600);
-    this.add.text(200, 200, 'Kebutuhan KU', {
-      fontSize: '32px', color: '#000'
-    }).setOrigin(0.5);
-    this.add.text(200, 240, 'Belajar Primer, Sekunder, Tersier', {
-      fontSize: '16px', color: '#f60'
-    }).setOrigin(0.5);
+    this.add.text(200, 200, 'Kebutuhan KU', { fontSize: '32px', color: '#000' }).setOrigin(0.5);
+    this.add.text(200, 240, 'Belajar Primer, Sekunder, Tersier', { fontSize: '16px', color: '#f60' }).setOrigin(0.5);
 
     const startBtn = this.add.text(200, 300, 'Mulai', {
       fontSize: '24px', backgroundColor: '#333', color: '#fff', padding: 10
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
-    // ✅ Lebih stabil: langsung pointerdown di button
     startBtn.on('pointerdown', () => {
       if (!this.game.bgm) {
         this.game.bgm = this.sound.add('bgm', { loop: true, volume: 0.5 });
@@ -48,47 +41,58 @@ class StartScene extends Phaser.Scene {
 
 class GameScene extends Phaser.Scene {
   constructor() { super({ key: 'GameScene' }); }
-
   preload() {
     this.load.image('bg', 'asset/image/bg.jpg');
     this.load.image('player', 'asset/image/anakSD.png');
     this.load.audio('sfxGood', 'asset/music/benar.mp3');
     this.load.audio('sfxBad', 'asset/music/salah.mp3');
 
+    // Level 1
     this.load.image('good1a', 'asset/image/makanan.png');
     this.load.image('good1b', 'asset/image/baju.png');
     this.load.image('good1c', 'asset/image/rumah.png');
     this.load.image('bad1a', 'asset/image/emas.png');
     this.load.image('bad1b', 'asset/image/berlian.png');
     this.load.image('bad1c', 'asset/image/uang.png');
+
+    // Level 2
+    this.load.image('good2a', 'asset/image/motor.png');
+    this.load.image('good2b', 'asset/image/tv.png');
+    this.load.image('good2c', 'asset/image/laptop.png');
+    this.load.image('bad2a', 'asset/image/makanan.png');
+    this.load.image('bad2b', 'asset/image/baju.png');
+    this.load.image('bad2c', 'asset/image/rumah.png');
+
+    // Level 3
+    this.load.image('good3a', 'asset/image/uang.png');
+    this.load.image('good3b', 'asset/image/berlian.png');
+    this.load.image('good3c', 'asset/image/emas.png');
+    this.load.image('bad3a', 'asset/image/motor.png');
+    this.load.image('bad3b', 'asset/image/tv.png');
+    this.load.image('bad3c', 'asset/image/laptop.png');
   }
 
   create() {
     this.add.image(200, 300, 'bg').setDisplaySize(400, 600);
 
     this.player = this.physics.add.sprite(200, 550, 'player').setDisplaySize(75, 75).setCollideWorldBounds(true);
-
     this.score = 0;
     this.fails = 0;
     this.level = 1;
     this.isPaused = false;
 
-    this.levelText = this.add.text(200, 50, '', {
-      fontSize: '20px', color: '#000'
-    }).setOrigin(0.5);
-    this.scoreText = this.add.text(10, 10, 'Score: 0', {
-      fontSize: '16px', color: '#000'
-    });
-    this.failsText = this.add.text(10, 30, 'Gagal: 0/3', {
-      fontSize: '16px', color: '#f00'
-    });
+    this.levelText = this.add.text(200, 50, '', { fontSize: '20px', color: '#000' }).setOrigin(0.5);
+    this.scoreText = this.add.text(10, 10, 'Score: 0', { fontSize: '16px', color: '#000' });
+    this.failsText = this.add.text(10, 30, 'Gagal: 0/3', { fontSize: '16px', color: '#f00' });
 
-    this.bgm = this.game.bgm; // ✅ BGM global
+    this.bgm = this.game.bgm;
     this.sfxGood = this.sound.add('sfxGood');
     this.sfxBad = this.sound.add('sfxBad');
 
     this.levels = {
       1: { name: 'Primer', good: ['good1a', 'good1b', 'good1c'], bad: ['bad1a', 'bad1b', 'bad1c'] },
+      2: { name: 'Sekunder', good: ['good2a', 'good2b', 'good2c'], bad: ['bad2a', 'bad2b', 'bad2c'] },
+      3: { name: 'Tersier', good: ['good3a', 'good3b', 'good3c'], bad: ['bad3a', 'bad3b', 'bad3c'] },
     };
 
     this.goods = [];
@@ -108,6 +112,8 @@ class GameScene extends Phaser.Scene {
 
   startSpawnLoops() {
     const cfg = this.levels[this.level];
+    if (this.goodEvent) this.goodEvent.remove();
+    if (this.badEvent) this.badEvent.remove();
     this.goodEvent = this.time.addEvent({
       delay: 2000,
       callback: () => { if (this.goods.length < 3) this.spawnOneItem('good', cfg.good); },
@@ -160,9 +166,14 @@ class GameScene extends Phaser.Scene {
       }
     });
 
-    if (this.score >= this.level * 10) {
+    if (this.score >= 30) {
       this.scene.start('GameOverScene', { score: this.score, win: true });
+    } else if (this.score >= 20 && this.level === 2) {
+      this.level = 3; this.showLevelText(); this.startSpawnLoops();
+    } else if (this.score >= 10 && this.level === 1) {
+      this.level = 2; this.showLevelText(); this.startSpawnLoops();
     }
+
     if (this.fails >= 3) {
       this.scene.start('GameOverScene', { score: this.score, win: false });
     }
@@ -209,13 +220,8 @@ class GameOverScene extends Phaser.Scene {
       { fontSize: '24px', color: '#000' }).setOrigin(0.5);
     const btn = this.add.text(200, 350, 'Main Lagi',
       { fontSize: '24px', backgroundColor: '#333', color: '#fff', padding: 10 })
-      .setOrigin(0.5)
-      .setInteractive({ useHandCursor: true });
-
-    // ✅ pointerdown langsung
-    btn.on('pointerdown', () => {
-      this.scene.start('GameScene');
-    });
+      .setOrigin(0.5).setInteractive();
+    btn.on('pointerdown', () => this.scene.start('GameScene'));
   }
 }
 
